@@ -68,7 +68,8 @@
 typedef struct _tree {
     char key;
     int weight;
-    char code[16];
+    int level;
+//    char code[16];
     struct _tree* left;
     struct _tree* right;
 } Tree;
@@ -105,6 +106,7 @@ Tree* createHuffmanNode() {
     Tree* t = (Tree*)malloc(sizeof(Tree));
     t->key = '*';
     t->weight = 0;
+    t->level = 0;
     t->left = NULL;
     t->right = NULL;
     return t;
@@ -126,52 +128,100 @@ void traversal(Tree* t) {
     traversal(t->right);
 }
 
+int getHeight(Tree* t) {
+    if(!t) {
+        return 0;
+    }
+    else {
+        int max = t->left->level > t->right->level ? t->left->level : t->right->level;
+        t->level = max + 1;
+    }
+    return t->level;
+}
+
+void setLevels(Tree* t, int height) {
+    if(!t) {
+        return;
+    }
+    else {
+        t->level = height;
+        setLevels(t->left, height + 1);
+        setLevels(t->right, height + 1);
+    }
+}
+
+int getSum(Tree* t) {
+    if(!t) {
+        return 0;
+    }
+    if(t->key == '*') {
+        return getSum(t->left) + getSum(t->right);
+    }
+    else {
+        return t->weight * t->level + getSum(t->left) + getSum(t->right);
+    }
+}
+
 int weighting(Tree* huffman) {
     if(!huffman) {
         return 0;
     }
-    if(huffman->key == '*') {
-        huffman->weight = weighting(huffman->left) + weighting(huffman->right);
-    }
-    return huffman->weight;
+    setLevels(huffman, 0);
+    return getSum(huffman);
 }
 
-void siftdown(int* heap, int n, int i) {
+void siftdown(Tree** heap, int n, int i) {
     while(i * 2 + 1 < n) {
         int next = i * 2 + 1;
         int right = i * 2 + 2;
-        if(right < n && heap[right] < heap[next]) {
+        if(right < n && heap[right]->weight < heap[next]->weight) {
             next = right;
         }
         
-        int temp = heap[i];
-        heap[i] = heap[next];
-        heap[next] = temp;
-        
-        i = next;
+        if(heap[next]->weight < heap[i]->weight) {
+            Tree* temp = heap[i];
+            heap[i] = heap[next];
+            heap[next] = temp;
+            i = next;
+        }
+        else {
+            break;
+        }
     }
 }
 
-void heapify(int* heap, int n) {
+void heapify(Tree** heap, int n) {
     for(int i = (n - 2) / 2; i >= 0; i--) {
         siftdown(heap, n, i);
     }
+//    printf("After Heapify: ");
+//    for(int i = 0; i<n; i++) {
+//        printf("%c ", heap[i]->key);
+//    }
+//    printf("\n");
 }
 
-int heapDelete(int* heap, int n) {
+Tree* heapDelete(Tree** heap, int n) {
+    Tree* temp = heap[0];
     heap[0] = heap[n-1];
+    heap[n-1] = temp;
     siftdown(heap, n-1, 0);
+//        printf("After Delete: ");
+//        for(int i = 0; i<n; i++) {
+//            printf("%c ", heap[i]->key);
+//        }
+//        printf("\n");
     return heap[n-1];
 }
 
-void siftup(int* heap, int n) {
+void siftup(Tree** heap, int n) {
     while (n > 0) {
         int parent = (n - 1) / 2;
-        if(heap[n] > heap[parent]) {
+        if(heap[n]->weight > heap[parent]->weight) {
             return;
         }
         else {
-            int tmp = heap[n];
+            Tree* tmp = heap[n];
             heap[n] = heap[parent];
             heap[parent] = tmp;
             
@@ -180,43 +230,29 @@ void siftup(int* heap, int n) {
     }
 }
 
-void heapAdd(int* heap, int n, int value) {
-    heap[n] = value;
+void heapAdd(Tree** heap, int n, Tree* node) {
+    heap[n] = node;
     siftup(heap, n);
 }
 
-int huffmanWeight(int* heap, int n) {
+int huffmanWeight(Tree** heap, int n) {
     heapify(heap, n);
-    while(n > 0) {
-        int a = heapDelete(heap, n--);
-        int b = heapDelete(heap, n--);
-        heapAdd(heap, n++, a+b);
+    while(n > 1) {
+        Tree* huff =createHuffmanNode();
+        huff->left = heapDelete(heap, n--);
+        huff->right = heapDelete(heap, n--);
+        huff->weight = huff->left->weight + huff->right->weight;
+        heapAdd(heap, n++, huff);
     }
     
-    return 0;
+    return weighting(heap[0]);
 }
 
 int main() {
     int n;
     scanf("%d", &n);
     
-//    Tree* charset = (Tree*)malloc(sizeof(Tree));
-//    scanf("%c", &charset->key);
-//    scanf("%d", &charset->weight);
-//    charset->left = NULL;
-//    charset->right = NULL;
-    
-//    for(int i = 1; i < n; i++) {
-//        Tree* node = (Tree*)malloc(sizeof(Tree));
-//        scanf("%c", &node->key);
-//        scanf("%d", &node->weight);
-//        node->left = NULL;
-//        node->right = NULL;
-//        insertBT(charset, node);
-//    }
-    
     Tree* charset[n];
-    // int heap[n];
     
     for(int i = 0; i < n; i++) {
         charset[i] = (Tree*)malloc(sizeof(Tree));
@@ -226,25 +262,29 @@ int main() {
         charset[i]->key = str[0];
         charset[i]->left = NULL;
         charset[i]->right = NULL;
-        //charset[i]->weight = heap[n];
     }
     
-//    for(int i = 0; i < n; i++) {
-//        printf("key:%c weight:%d\n", charset[i]->key, charset[i]->weight);
-//    }
+    Tree* tempset[n];
+    for(int i = 0; i < n; i++) {
+        tempset[i] = (Tree*)malloc(sizeof(Tree));
+        copy(charset[i], tempset[i]);
+    }
+    int rw = huffmanWeight(tempset, n);
+    for(int i = 0; i < n; i++) {
+        free(tempset[i]);
+    }
     
     int m;
     scanf("%d", &m);
     for(int i = 0; i < m; i++) { // for each submission
         Tree* huffman = createHuffmanNode();
         int valid = 1;
-        
-        for(int j = 0; j < n && valid; j++) { // for each char
+        int j;
+        for(j = 0; j < n && valid; j++) { // for each char
             char notcare[2];
             scanf("%s", notcare);
-            char code[16];
+            char code[8];
             scanf("%s", code);
-            // printf("%s 's code is: %s\n", notcare, code);
             Tree* temp = huffman;
             
             for(int k = 0; code[k] != '\0'; k++) {
@@ -255,7 +295,7 @@ int main() {
                     else {
                         if(temp->left->key != '*') {
                             valid = 0;
-                            printf("node duplicate.\n");
+                            //printf("node duplicate.\n");
                             break;
                         }
                     }
@@ -277,17 +317,25 @@ int main() {
             
             if(temp->left || temp->right) {
                 valid = 0;
+                j++;
                 break;
             }
             copy(charset[j], temp);
         } // end of j
         
+        if(j < n) {
+            for(j; j < n; j++) {
+                char notcare[2];
+                scanf("%s", notcare);
+                char code[8];
+                scanf("%s", code);
+            }
+        } // read unused inputs
         
         if(valid) { // what's valid? All chars are Huffman's leaves.
-            traversal(huffman);
+//            traversal(huffman);
             int aw = weighting(huffman);
-            int rw = aw;
-            
+           
             if(aw == rw) {
                 printf("Yes\n");
             }
