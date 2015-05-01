@@ -9,47 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct _set {
-    int elements[4];
-    int size;
-} Set;
-
-void removeSet(Set* s, int value) {
-    for(int i = 0; i < 4; i++) {
-        if(s->elements[i] == value) {
-            s->elements[i] = -1;
-            s->size--;
-            break;
-        }
-    }
-}
-
-int inSet(Set* set, int value) {
-    int res = 0;
-    if(set->size == 0) {
-        return res;
-    }
-    for(int i = 0; i < 4; i++) {
-        if(set->elements[i] == value){
-            res = 1;
-            break;
-        }
-    }
-    return res;
-}
-
-int getFromSet(Set*s) {
-    int res;
-    for(int i = 0; i < 4; i++) {
-        if(s->elements[i] != -1) {
-            res = s->elements[i];
-            s->size--;
-            break;
-        }
-    }
-    return res;
-}
-
 typedef struct _stack {
     int type;
     int num;
@@ -97,17 +56,90 @@ void printStack(Stack* s) {
     }
 }
 
-Set* set;
+int calculate(int a, int b, char op) {
+	int res = 0;
+	switch(op) {
+	case '+':
+		res = a + b;
+		break;
+	case '-':
+		res = a - b;
+		break;
+	case '*':
+		res = a * b;
+		break;
+	case '/':
+		if(b != 0) {
+			res = a / b;
+		}
+		else {
+			res = -32768;
+		}
+		break;
+	}
+	return res;
+}
+
+int found24 = 0;
 char op[4];
 int num[4];
 Stack* s[7];
+int x[3], y[4];
 
-void setOp() {
-    for(int i = 0; i < 4; i++) {
-        for(int j = 0; j < 7; j++) {
-            
-        }
-    }
+void loop() {
+	for(x[0] = 0; x[0] < 4; x[0]++) {
+		for(x[1] = 0; x[1] < 4; x[1]++) {
+			for(x[2] = 0; x[2] < 4; x[2]++) {
+				for(y[0] = 0; y[0] < 4; y[0]++) {
+					for(y[1] = 0; y[1] < 4 && y[1] != y[0]; y[1]++){
+						for(y[2] = 0; y[2] < 4 && y[2] != y[0] && y[2] != y[1]; y[2]++) {
+							for(y[3] = 0; y[3] < 4 && y[3] != y[0] && y[3] != y[1] && y[3] != y[2]; y[3]++) {
+								int indexop = 0;
+								int indexnum = 0;
+								Stack* expr = NULL;
+								for(int i = 0; i < 7; i++) {
+									if(s[i]->type) {
+										s[i]->num = num[y[indexnum++]];
+										push(expr, s[i]);
+									}
+									else {
+										s[i]->op = op[x[indexop++]];
+										Stack* ta = pop(expr);
+										Stack* tb = pop(expr);
+										int result = calculate(ta->num, tb->num, s[i]->op);
+										Stack* temp = createStack(2, result, ' ');
+										push(expr, temp);
+										if(ta->type == 2) {
+											free(ta);
+										}
+										if(tb->type == 2) {
+											free(tb);
+										}
+									}
+								}
+								Stack* res = pop(expr);
+								if(res->num == 24) {
+									found24 = 1;
+									for(int i = 0; i < 7; i++) {
+										if(s[i]->type)
+											printf("%d ", s[i]->num);
+										else
+											printf("%c ", s[i]->op);
+									}
+									printf("\n");
+									free(res);
+									goto BINGO;
+								}
+								free(res);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	BINGO:
+	return;
 }
 
 void case1() {
@@ -115,6 +147,7 @@ void case1() {
     s[3]->type = 1;
     s[4]->type = 0;
     s[5]->type = 0;
+    loop();
 }
 
 void case2() {
@@ -146,50 +179,62 @@ void case5() {
 }
 
 int main() {
-    
+
     op[0] = '+';
     op[1] = '-';
     op[2] = '*';
     op[3] = '/';
-    
-    set = (Set*)malloc(sizeof(Set));
-    set->size = 4;
-    
+
     for(int i = 0; i < 4; i++) {
         scanf("%d", &num[i]);
-        set->elements[i] = num[i];
     }
-    
-   
+
+
     for(int i = 0; i < 7; i++) {
         s[i] = (Stack*)malloc(sizeof(Stack));
     }
     s[0]->type = 1;
     s[1]->type = 1;
     s[6]->type = 0;
-    
+
     case1();
+    if(found24)
+    	goto exit;
     case2();
+    if(found24)
+        	goto exit;
     case3();
+    if(found24)
+        	goto exit;
     case4();
+    if(found24)
+        	goto exit;
     case5();
-    
+    if(found24)
+        	goto exit;
+
+    if(!found24) {
+    	printf("-1\n");
+    }
+exit:
     return 0;
 }
 
-/*ä¸€å‰¯æ‰‘å…‹ç‰Œçš„æ¯å¼ ç‰Œè¡¨ç¤ºä¸€ä¸ªæ•°ï¼ˆJã€Qã€Kåˆ†åˆ«è¡¨ç¤º11ã€12ã€13ï¼Œä¸¤ä¸ªå¸ä»¤éƒ½è¡¨ç¤º6ï¼‰ã€‚ä»»å–4å¼ ç‰Œï¼Œå³å¾—åˆ°4ä¸ª1~13çš„æ•°ï¼Œè¯·æ·»åŠ è¿ç®—ç¬¦ï¼ˆè§„å®šä¸ºåŠ + å‡- ä¹˜* é™¤/ å››ç§ï¼‰ä½¿ä¹‹æˆä¸ºä¸€ä¸ªè¿ç®—å¼ã€‚æ¯ä¸ªæ•°åªèƒ½å‚ä¸ä¸€æ¬¡è¿ç®—ï¼Œ4ä¸ªæ•°é¡ºåºå¯ä»¥ä»»æ„ç»„åˆï¼Œ4ä¸ªè¿ç®—ç¬¦ä»»æ„å–3ä¸ªä¸”å¯ä»¥é‡å¤å–ã€‚è¿ç®—éµä»ä¸€å®šä¼˜å…ˆçº§åˆ«ï¼Œå¯åŠ æ‹¬å·æ§åˆ¶ï¼Œæœ€ç»ˆä½¿è¿ç®—ç»“æœä¸º24ã€‚è¯·è¾“å‡ºä¸€ç§è§£å†³æ–¹æ¡ˆçš„è¡¨è¾¾å¼ï¼Œç”¨æ‹¬å·è¡¨ç¤ºè¿ç®—ä¼˜å…ˆã€‚å¦‚æœæ²¡æœ‰ä¸€ç§è§£å†³æ–¹æ¡ˆï¼Œåˆ™è¾“å‡º-1è¡¨ç¤ºæ— è§£ã€‚
- 
- è¾“å…¥æ ¼å¼è¯´æ˜ï¼š
- 
- è¾“å…¥åœ¨ä¸€è¡Œä¸­ç»™å‡º4ä¸ªæ•´æ•°ï¼Œæ¯ä¸ªæ•´æ•°å–å€¼åœ¨[1, 13]ã€‚
- 
- è¾“å‡ºæ ¼å¼è¯´æ˜ï¼š
- 
- è¾“å‡ºä¸€ç§è§£å†³æ–¹æ¡ˆçš„è¡¨è¾¾å¼ï¼Œç”¨æ‹¬å·è¡¨ç¤ºè¿ç®—ä¼˜å…ˆã€‚å¦‚æœæ²¡æœ‰è§£å†³æ–¹æ¡ˆï¼Œè¯·è¾“å‡º-1ã€‚
- 
- æ ·ä¾‹è¾“å…¥ä¸è¾“å‡ºï¼š
- 
- åºå·	è¾“å…¥	è¾“å‡º
+/*
+Ò»¸±ÆË¿ËÅÆµÄÃ¿ÕÅÅÆ±íÊ¾Ò»¸öÊı£¨J¡¢Q¡¢K·Ö±ğ±íÊ¾11¡¢12¡¢13£¬Á½¸öË¾Áî¶¼±íÊ¾6£©¡£ÈÎÈ¡4ÕÅÅÆ£¬¼´µÃµ½4¸ö1~13µÄÊı£¬
+ÇëÌí¼ÓÔËËã·û£¨¹æ¶¨Îª¼Ó+ ¼õ- ³Ë* ³ı/ ËÄÖÖ£©Ê¹Ö®³ÉÎªÒ»¸öÔËËãÊ½¡£Ã¿¸öÊıÖ»ÄÜ²ÎÓëÒ»´ÎÔËËã£¬4¸öÊıË³Ğò¿ÉÒÔÈÎÒâ×éºÏ£¬
+4¸öÔËËã·ûÈÎÒâÈ¡3¸öÇÒ¿ÉÒÔÖØ¸´È¡¡£ÔËËã×ñ´ÓÒ»¶¨ÓÅÏÈ¼¶±ğ£¬¿É¼ÓÀ¨ºÅ¿ØÖÆ£¬×îÖÕÊ¹ÔËËã½á¹ûÎª24¡£
+ÇëÊä³öÒ»ÖÖ½â¾ö·½°¸µÄ±í´ïÊ½£¬ÓÃÀ¨ºÅ±íÊ¾ÔËËãÓÅÏÈ¡£Èç¹ûÃ»ÓĞÒ»ÖÖ½â¾ö·½°¸£¬ÔòÊä³ö-1±íÊ¾ÎŞ½â¡£
+
+ÊäÈë¸ñÊ½ËµÃ÷£º
+
+ÊäÈëÔÚÒ»ĞĞÖĞ¸ø³ö4¸öÕûÊı£¬Ã¿¸öÕûÊıÈ¡ÖµÔÚ[1, 13]¡£
+
+Êä³ö¸ñÊ½ËµÃ÷£º
+
+Êä³öÒ»ÖÖ½â¾ö·½°¸µÄ±í´ïÊ½£¬ÓÃÀ¨ºÅ±íÊ¾ÔËËãÓÅÏÈ¡£Èç¹ûÃ»ÓĞ½â¾ö·½°¸£¬ÇëÊä³ö-1¡£
+
+ÑùÀıÊäÈëÓëÊä³ö£º
  1
  2 3 12 12
  ((3-2)*12)+12
@@ -205,93 +250,7 @@ int main() {
  5
  2 13 7 7
  2*(13-(7/7))
- 6	
+ 6
  5 5 5 2
  -1
 */
-
-
-
-//    for(int a = 0; a < 4; a++) {
-//        s[0] = createStack(1, num[a], ' ');
-//        removeSet(set, num[a]);
-//
-//        for(int b = 0; b < 4; b++) {
-//            if(a == b) {
-//                continue;
-//            }
-//            s[1] = createStack(1, num[b], ' ');
-//            removeSet(set, num[b]);
-//
-//            for(int c = 0; c < 8; c++) {
-//                if(c > 3) { // number
-//                    if(c - 4 == a || c - 4 == b) {
-//                        continue;
-//                    }
-//                    s[2] = createStack(1, num[c - 4], ' ');
-//                    removeSet(set, num[c-4]);
-//                }
-//                else { // operator
-//                    s[2] = createStack(0, 0, op[c]);
-//                    numOfOp++;
-//                }
-//
-//                for(int d = 0; d < 8; d++) {
-//                    if(d > 3) { // number
-//                        if(inSet(set, num[d-4])) {
-//                            s[3] = createStack(1, num[d - 4], ' ');
-//                            removeSet(set, num[d-4]);
-//                        }
-//                        else {
-//                            continue;
-//                        }
-//                    }
-//                    else { // operator
-//                        if(numOfOp > 1) {
-//                            continue;
-//                        }
-//                        s[3] = createStack(0, 0, op[d]);
-//                        numOfOp++;
-//                    }
-//
-//                    for(int e = 0; e < 8; e++) {
-//                        if(e > 3) { // number
-//                            if(inSet(set, num[e-4])) {
-//                                s[4] = createStack(1, num[e - 4], ' ');
-//                                removeSet(set, num[e-4]);
-//                            }
-//                            else {
-//                                continue;
-//                            }
-//                        }
-//                        else { // operator
-//                            s[4] = createStack(0, 0, op[e]);
-//                        }
-//
-//                        for(int f = 0; f < 8; f++) {
-//                            if(f > 3) { // number
-//                                if(inSet(set, num[f-4])) {
-//                                    s[5] = createStack(1, num[f - 4], ' ');
-//                                    removeSet(set, num[f-4]);
-//                                }
-//                                else {
-//                                    continue;
-//                                }
-//                            }
-//                            else { // operator
-//                                s[5] = createStack(0, 0, op[f]);
-//                            }
-//
-//                            for(int g = 0; g < 4; g++) {
-//                                s[6] = createStack(0, 0, op[g]);
-//                                for(int i = 0; i < 7; i++) {
-//                                    printStack(s[i]);
-//                                }
-//                                printf("\n");
-//                            }
-//                        }
-//                    } // end of e
-//                } // end of d
-//            } // end of c
-//        } // end of b
-//    } // end of a
