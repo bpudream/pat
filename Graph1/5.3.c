@@ -98,7 +98,7 @@ int main() {
             int value = dequeue(&queue);
             if(level[value] > 6)
                 break;
-            if(!isVisited[value]) {
+            if(!isVisited[value]) { // A better approach would modify isVisited as soon as the node is Enqueued
                 isVisited[value] = 1;
                 List* temp = graph[value];
                 while(temp->next) {
