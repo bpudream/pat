@@ -8,7 +8,64 @@
 
 #include <stdio.h>
 
+void shuffle(int* cards, int* table) {
+    int res[55];
+    for(int i = 1; i < 55; i++) {
+        res[table[i]] = cards[i];
+    }
+    for(int i = 1; i < 55; i++) {
+        cards[i] = res[i];
+    }
+}
 
+int main() {
+    int indextable[55];
+    int cards[55];
+    
+    for(int i = 0; i < 55; i++) {
+        scanf("%d", &indextable[i]);
+        cards[i] = i;
+    }
+    
+    for(int iter = 0; iter < indextable[0]; iter++) {
+        shuffle(cards, indextable);
+    }
+    
+    for(int i = 1; i < 55; i++) {
+        char c;
+        int div = cards[i] / 13;
+        int mod = cards[i] % 13;
+        if(mod == 0) {
+            div--;
+            mod = 13;
+        }
+        switch (div) {
+            case 0:
+                c = 'S';
+                break;
+            case 1:
+                c = 'H';
+                break;
+            case 2:
+                c = 'C';
+                break;
+            case 3:
+                c = 'D';
+                break;
+            case 4:
+                c = 'J';
+                break;
+                
+            default:
+                c = ' ';
+                break;
+        }
+        if(i == 1)
+            printf("%c%d", c, mod);
+        else
+            printf(" %c%d", c, mod);
+    }
+}
 /*
  Shuffling is a procedure used to randomize a deck of playing cards. Because standard shuffling techniques are seen as weak, and in order to avoid "inside jobs" where employees collaborate with gamblers by performing inadequate shuffles, many casinos employ automatic shuffling machines. Your task is to simulate a shuffling machine.
  
