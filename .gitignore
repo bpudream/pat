@@ -2,3 +2,11 @@
 leetcode/BSTIterator.java
 
 leetcode/test.java
+
+leetcode/.idea/.name
+
+leetcode/.idea/compiler.xml
+
+*.xml
+
+leetcode/.idea/leetcode.iml
