@@ -1,3 +1,7 @@
+package leetcode;
+
+import java.util.HashMap;
+
 /**
  * Created by bpudream on 15-05-30.
  */
@@ -14,6 +18,26 @@ public class Solution001 {
                 }
             }
         }
+        return res;
+    }
+
+    public int[] twoSumHash(int[] nums, int target) {
+        int[] res = new int[2];
+        HashMap<Integer, Integer> hashMap = new HashMap<>();
+
+        for(int i = 0; i < nums.length; i++) {
+            hashMap.put(nums[i], i);
+        }
+
+        for(int i = 0; i < nums.length; i++) {
+            int seek = target - nums[i];
+            Integer t = hashMap.get(seek);
+            if(t != null && t > i) {
+                res[0] = i;
+                res[1] = t;
+            }
+        }
+
         return res;
     }
 }
